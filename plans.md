@@ -71,7 +71,7 @@
 ```
 GitHub Organization: trendyuniquellc
 │
-├── trendyuniquellc/ui                        ← Repo 1：组件库（独立发版）
+├── trendyuniquellc/ui-library                        ← Repo 1：组件库（独立发版）
 │   └── 发布到 GitHub Packages
 │       @trendyuniquellc/ui@x.y.z
 │
@@ -86,10 +86,10 @@ GitHub Organization: trendyuniquellc
         └── tsconfig/                ← 共享 TypeScript 配置基础
 ```
 
-### Repo 1：`trendyuniquellc/ui` 组件库
+### Repo 1：`trendyuniquellc/ui-library` 组件库
 
 ```
-trendyuniquellc/ui/
+trendyuniquellc/ui-library/
 ├── src/
 │   ├── components/
 │   └── tokens/

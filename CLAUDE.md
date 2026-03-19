@@ -8,15 +8,19 @@ UI component library built on React 18 + MUI + Tailwind CSS, published as an ESM
 
 | Layer | Tool |
 |-------|------|
-| Language | TypeScript 5 (`strict: true`) |
-| Framework | React 18 |
-| Base components | MUI v6 |
-| Styling | Tailwind CSS v3 |
-| Build | Vite + vite-plugin-dts |
-| Test | Vitest + Testing Library |
-| Docs | Storybook 8 |
-| Release | Changesets |
+| Language | TypeScript 5.6.x(`strict: true`) |
+| Framework | React 19.x|
+| Base components | MUI 6.x|
+| Styling | Tailwind CSS 4.x|
+| Build | Vite 6.x + vite-plugin-dts  4.x|
+| Test | Vitest 2.x + Testing Library |
+| Docs | Storybook 8.x|
+| Release | Changesets 11.x|
 
+- Node.js  22.x LTS
+- @emotion/react 11.x
+- eslint 9.x 
+- prettier  3.x 
 ---
 
 ## TypeScript — Strict Mode
