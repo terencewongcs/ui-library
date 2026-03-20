@@ -8,7 +8,7 @@
 
 ## 项目背景
 
-本仓库是 `trendyuniquellc/ui-library`，为 TrendyUnique LLC 电商平台的**独立组件库**，发布为 `@trendyuniquellc/ui` 到 GitHub Packages（私有）。消费方有两个：
+本仓库是 `trendyuniquellc/ui-library`，为 TrendyUnique LLC 电商平台的**独立组件库**，发布为 `@trendyuniquellc/ui-library` 到 GitHub Packages（私有）。消费方有两个：
 - **storefront**（Vike SSR/SSG/CSR 混合渲染）— 对 SSR 兼容性要求严格
 - **dashboard**（Vite CSR）— 后台管理面板
 
@@ -61,7 +61,7 @@ dist/tokens.css             ← CSS 自定义属性（供未来扩展）
 
 规则：
 - 所有 token 值只在 `src/tokens/` 中定义，禁止在组件代码或 MUI theme 中硬编码数值
-- storefront 通过 `presets: [require('@trendyuniquellc/ui/tailwind.preset')]` 消费，无需手动转换单位
+- storefront 通过 `presets: [require('@trendyuniquellc/ui-library/tailwind.preset')]` 消费，无需手动转换单位
 - **storefront 必须锁定 Tailwind CSS v3**：Tailwind v4 删除了 `presets` API，`tailwind.preset.cjs` 在 v4 中无法使用；storefront 的 `package.json` 需固定 `"tailwindcss": "^3.x"`
 - `package.json` `exports` 字段须同时暴露 `./tokens.json` 和 `./tailwind.preset`
 - Style Dictionary 构建在 tsup 构建之前运行

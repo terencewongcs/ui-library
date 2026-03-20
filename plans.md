@@ -84,9 +84,9 @@ GitHub Organization: trendyuniquellc
 │
 ├── trendyuniquellc/ui-library                        ← Repo 1：组件库（独立发版）
 │   └── 发布到 GitHub Packages
-│       @trendyuniquellc/ui@x.y.z
+│       @trendyuniquellc/ui-library@x.y.z
 │
-└── trendyuniquellc/ecommerce                 ← Repo 2：主项目 monorepo
+└── trendyuniquellc/ecommerce-platform                 ← Repo 2：主项目 monorepo
     ├── apps/
     │   ├── storefront/              ← Vike SSR 前台商城
     │   └── dashboard/                   ← Vite CSR 后台管理
@@ -109,10 +109,10 @@ trendyuniquellc/ui-library/
    └── workflows/
 ```
 
-### Repo 2：`trendyuniquellc/ecommerce` 主项目 Monorepo
+### Repo 2：`trendyuniquellc/ecommerce-platform` 主项目 Monorepo
 
 ```
-trendyuniquellc/ecommerce/
+trendyuniquellc/ecommerce-platform/
 ├── apps/
 │   ├── storefront/
 │   │   ├── pages/
@@ -233,7 +233,7 @@ trendyuniquellc/ecommerce/
 
 ## 本地联调方案
 
-ui-library 是独立 repo，ecommerce 通过 GitHub Packages 消费已发布版本。本地同时修改组件库和消费方时，使用 `pnpm link` 建立符号链接，无需发布即可联调。
+ui-library 是独立 repo，ecommerce-platform 通过 GitHub Packages 消费已发布版本。本地同时修改组件库和消费方时，使用 `pnpm link` 建立符号链接，无需发布即可联调。
 
 **步骤：**
 
@@ -244,15 +244,15 @@ pnpm build
 pnpm link --global
 
 # 2. 在消费方目录（storefront 或 dashboard）链接本地版本
-cd path/to/ecommerce/apps/storefront
-pnpm link --global @trendyuniquellc/ui
+cd path/to/ecommerce-platform/apps/storefront
+pnpm link --global @trendyuniquellc/ui-library
 ```
 
 **联调结束后，恢复线上版本：**
 
 ```bash
 # 在消费方目录取消 link，恢复 package.json 中的版本
-pnpm unlink @trendyuniquellc/ui
+pnpm unlink @trendyuniquellc/ui-library
 pnpm install
 ```
 
