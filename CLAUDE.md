@@ -1,173 +1,151 @@
-# CLAUDE.md — @trendyunique/ui-library
-
-UI component library built on React 18 + MUI + Tailwind CSS, published as an ESM/CJS dual package.
-
----
-
-## Stack
-
-| Layer | Tool |
-|-------|------|
-| Language | TypeScript 5.6.x(`strict: true`) |
-| Framework | React 19.x|
-| Base components | MUI 6.x|
-| Styling | Tailwind CSS 4.x|
-| Build | Vite 6.x + vite-plugin-dts  4.x|
-| Test | Vitest 2.x + Testing Library |
-| Docs | Storybook 8.x|
-| Release | Changesets 11.x|
-
-- Node.js  22.x LTS
-- @emotion/react 11.x
-- eslint 9.x 
-- prettier  3.x 
----
-
-## TypeScript — Strict Mode
-
-`tsconfig.json` enforces `strict: true`, `noUnusedLocals`, `noUnusedParameters`.
-**Never disable or loosen these flags.**
-
-- Prefer explicit return types on all exported functions and hooks.
-- No `any`. Use `unknown` and narrow, or define a precise type.
-- No non-null assertions (`!`) unless you can prove safety in a comment.
-- Use `satisfies` to validate literals against a type without widening.
+ 1. 用中文回答
+ 2. 称呼规则：每次回复前必须使用"Teri"作为称呼。 
+ 3. 决策确认：遇到不确定的代码设计问题时，必须先询问 Teri，不得直接行动。 
+ 4. 代码兼容性：不能写兼容性代码，除非我主动要求。
+ 5. 写完代码后，列出边缘情况和测试用例
 
 ---
 
-## Props Convention
+## 项目背景
 
-Every component must define and export a named `*Props` interface.
+本仓库是 `trendyuniquellc/ui-library`，为 TrendyUnique LLC 电商平台的**独立组件库**，发布为 `@trendyuniquellc/ui` 到 GitHub Packages（私有）。消费方有两个：
+- **storefront**（Vike SSR/SSG/CSR 混合渲染）— 对 SSR 兼容性要求严格
+- **dashboard**（Vite CSR）— 后台管理面板
 
-```ts
-// Good
-export interface ButtonProps
-  extends Omit<MuiButtonProps, 'variant' | 'size' | 'color'> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  className?: string;
+## Tech Stack
+
+- **构建**：tsup ^8.3
+- **UI 基础**：MUI（Material UI）v6
+- **图标**：Lucide React ^0.400
+- **语言**：TypeScript ^5.5（strict mode）
+- **设计 Token**：Style Dictionary v4
+- **文档**：Storybook v8，`*.stories.tsx`（CSF）+ `*.mdx`（文档）分离格式，自动部署到 GitHub Pages
+- **测试**：Vitest v2、React Testing Library ^16（组件交互）
+- **视觉回归**：Chromatic（每次 PR 自动截图对比）
+- **版本管理**：Changesets ^2
+- **CI/CD**：GitHub Actions
+- **Node.js**：v22 LTS
+- **React**：^18.0
+
+## 目录结构
+
+```
+src/
+├── components/   # 所有 UI 组件
+└── tokens/       # Style Dictionary 源文件（*.sd.json）
+.storybook/
+.github/workflows/
+```
+
+## 组件开发规范
+
+1. **Props 类型**：每个组件必须导出独立具名 `interface`，命名为 `{ComponentName}Props`。
+2. **TypeScript strict**：不得使用 `any`，不得绕过类型检查。
+3. **SSR 兼容**：禁止在模块作用域直接访问 `window` / `document` 等浏览器全局变量；需要时用条件判断或 `useEffect`。
+4. **heading 层级**：标题层级由消费方通过 prop（如 `as="h2"`）控制，组件内不硬编码。
+5. **图片**：`alt` prop 必须为非可选（`ImageProps` 中强制要求）。
+6. **不覆盖 MUI ARIA**：MUI 对 modal、menu 等复合组件已内置 ARIA 角色，无充分理由不得覆盖。
+7. **不写兼容性代码**：除非 Teri 主动要求。
+
+## Design Tokens
+
+使用 **Style Dictionary** 管理所有设计 token，token 源文件为平台无关格式，构建时派生多种产物：
+
+```
+src/tokens/*.sd.json        ← 唯一数据源（breakpoints、colors、spacing、typography 等）
+        ↓ style-dictionary build
+dist/tokens.json            ← MUI theme 使用（数字，无单位）
+dist/tailwind.preset.cjs    ← storefront tailwind.config.js 使用（带 'px' 字符串）
+dist/tokens.css             ← CSS 自定义属性（供未来扩展）
+```
+
+规则：
+- 所有 token 值只在 `src/tokens/` 中定义，禁止在组件代码或 MUI theme 中硬编码数值
+- storefront 通过 `presets: [require('@trendyuniquellc/ui/tailwind.preset')]` 消费，无需手动转换单位
+- **storefront 必须锁定 Tailwind CSS v3**：Tailwind v4 删除了 `presets` API，`tailwind.preset.cjs` 在 v4 中无法使用；storefront 的 `package.json` 需固定 `"tailwindcss": "^3.x"`
+- `package.json` `exports` 字段须同时暴露 `./tokens.json` 和 `./tailwind.preset`
+- Style Dictionary 构建在 tsup 构建之前运行
+
+> **注意：`dist/tailwind.preset.cjs` 由 Style Dictionary 直接输出，不经过 tsup 处理。**
+> 必须在 `package.json` 的 `files` 字段中显式包含 `dist/tailwind.preset.cjs`（以及 `dist/tokens.json`、`dist/tokens.css`），否则 `npm publish` 时这些文件会被漏掉，消费方无法 `require`。
+> 同时 `exports` 中 `./tailwind.preset` 条目需使用 `"require"` 条件，因为 `tailwind.config.js` 是 CommonJS 上下文：
+> ```json
+> "./tailwind.preset": {
+>   "require": "./dist/tailwind.preset.cjs"
+> }
+> ```
+
+## Provider
+
+组件库导出 `TrendyUIProvider`，消费方在 app 根节点使用一次：
+
+```tsx
+export interface TrendyUIProviderProps {
+  emotionCache?: EmotionCache; // SSR 消费方（如 storefront）传入自己的 cache
   children: React.ReactNode;
 }
 ```
 
-Rules:
-- Extend the underlying HTML element props or MUI props via `Omit` — never copy-paste native props manually.
-- Mark optional props with `?`; required props are implicit.
-- Document each non-obvious prop with a JSDoc `/** */` comment on the line above it.
-- Export all public `type` aliases (`ButtonVariant`, `ButtonSize`, etc.) alongside the interface.
-
----
-
-## Hooks & Return Types
-
-- Always annotate the return type explicitly:
-  ```ts
-  function useDisclosure(): { isOpen: boolean; open: () => void; close: () => void }
-  ```
-- Return a plain object (not an array) when there are ≥ 2 values, so callers can destructure by name.
-- Keep hooks pure — no side effects outside `useEffect`.
-
----
-
-## Public API — Controlled & Unified
-
-Each component is barrel-exported from its `index.ts`, then re-exported from `src/index.ts`.
-
-```
-src/
-  components/
-    Button/
-      Button.tsx        ← implementation
-      Button.styles.ts  ← Tailwind class maps
-      Button.stories.tsx
-      Button.test.tsx
-      index.ts          ← export { Button } + export type { ButtonProps, ... }
-  index.ts              ← single public entry point
-```
-
-Rules:
-- **Only** export what consumers need. Internal helpers stay un-exported.
-- Add a named export to `package.json#exports` for every new component (tree-shaking support).
-- Never export default — named exports only.
-- Breaking API changes require a Changeset entry (`npm run changeset`).
-
----
+- Provider 内部同时处理 `StyledEngineProvider injectFirst` + `CacheProvider`
+- storefront SSR：自行创建 `createCache({ key: 'css', prepend: true })`，传入 Provider，自行做 critical CSS 提取
+- dashboard CSR 或其他消费方：不传，使用内置默认 cache
+- 组件库不接管 SSR，不导出 SSR 工具函数
 
 ## Reusability & Extensibility
-
-- **`forwardRef`** on every component that renders a DOM element — consumers must be able to attach refs.
-- **`className` prop** on every component — allows one-off Tailwind overrides without forking.
-- Style maps (e.g., `Button.styles.ts`) are separated from logic so themes can be swapped independently.
-- Prefer composition over configuration: expose `startIcon`/`endIcon`/`children` slots rather than bespoke boolean flags.
-
----
+- MUI slots / slotProps  每个组件暴露 slots 和 slotProps，允许替换内部子组件
 
 ## Responsive & Cross-Platform Consistency
-
-- Use Tailwind responsive prefixes (`sm:`, `md:`, `lg:`) for layout; never hard-code pixel breakpoints in JS.
-- Tailwind config (`tailwind.config.js`) is the single source of breakpoints and design tokens.
-- Test all new components at `375px`, `768px`, and `1440px` viewport widths in Storybook.
-- Avoid fixed heights/widths that break on small screens; use `min-h`, `max-w`, and relative units.
-
----
-
-## Accessibility (a11y)
-
-- Every interactive element must be reachable by keyboard and have a visible focus ring.
-- Use semantic HTML (`<button>`, `<a>`, `<nav>`, `<main>`, etc.) — not `<div onClick>`.
-- Provide `aria-label` or `aria-labelledby` when visual context is missing.
-- MUI handles ARIA roles for composite widgets (modal, menu, etc.); do not override them without a clear reason.
-- Run `@testing-library/jest-dom` a11y queries (`getByRole`, `getByLabelText`) in tests — avoid `getByTestId` for interactive elements.
-
----
-
-## SEO Friendliness
-
-- Components must support server-side rendering (no browser-only globals at module scope).
-- Heading levels (`h1`–`h6`) must be managed by the consumer via props (`as="h2"`), not hard-coded.
-- `<img>` wrappers must require an `alt` prop (mark it non-optional in `ImageProps`).
-- Do not suppress hydration warnings; fix the root cause instead.
-
----
+- 主题断点统一: 所有响应式逻辑用 MUI theme.breakpoints，禁止硬编码 @media px 值
+- 相对单位: 间距用 theme.spacing()，字号用 rem，禁止组件内写固定 px 尺寸
+- Storybook viewport addon: 每个组件 Story 覆盖 mobile / tablet / desktop 三个视口
 
 ## Customization
+- 根元素接受 className，方便消费方用 Tailwind 或自定义 CSS 叠加
+- 组件库内部不使用 Tailwind；Tailwind 仅供消费方在组件外部叠加样式
 
-Components support three customization layers, in order of preference:
+## a11y 要求
 
-1. **Props** — `variant`, `size`, `disabled`, slots (`startIcon`, etc.)
-2. **`className` prop** — append Tailwind utilities for one-off overrides
-3. **MUI `sx` prop / theme** — for deep MUI token overrides at app level
+- 所有交互元素必须可键盘访问，且有可见焦点环。
+- 使用语义化 HTML（`<button>`、`<a>`、`<nav>` 等），禁用 `<div onClick>`。
+- 缺少视觉上下文时提供 `aria-label` 或 `aria-labelledby`。
+- 测试中优先使用 `getByRole`、`getByLabelText`，避免用 `getByTestId` 测试交互元素。
 
-Do not expose raw CSS-in-JS `sx` on new components by default; consumers can access it via the spread `...rest` if the base MUI component supports it.
+## 测试规范
 
----
+| 层级 | 工具 | 覆盖范围 |
+|------|------|----------|
+| 单元测试 | Vitest v2 | 纯逻辑、自定义 Hooks |
+| 组件测试 | React Testing Library ^16 | 渲染、交互、a11y |
+| 交互测试 | @storybook/test（Storybook v8 内置） | Storybook interaction testing |
+| 视觉回归 | Chromatic | Storybook 截图对比 |
 
-## Commands
+E2E 测试（如购买流程）属于消费方（storefront）的职责，不在本仓库。
 
-```bash
-npm run dev            # Storybook dev server (port 6006)
-npm run test           # Vitest (single run)
-npm run test:watch     # Vitest watch
-npm run typecheck      # tsc --noEmit
-npm run lint           # ESLint
-npm run build          # Production build + type declarations
-npm run changeset      # Document a breaking/minor/patch change
-npm run release        # Build + publish to npm
-```
+> **注意：`@testing-library/jest-dom` matchers（如 `toBeInTheDocument()`）需要在 Vitest 中手动配置才能使用。**
+> 在 `vitest.config.ts` 中添加：
+> ```ts
+> test: {
+>   setupFiles: ['./vitest.setup.ts'],
+> }
+> ```
+> 并在 `vitest.setup.ts` 中：
+> ```ts
+> import '@testing-library/jest-dom';
+> ```
+> 否则 RTL 的 a11y 断言在运行时会报 `toBeInTheDocument is not a function`。
 
----
+## Storybook 规范
 
-## Checklist for Every New Component
+- 每个组件配套 `*.stories.tsx`（CSF story 定义）+ `*.mdx`（文档说明），分离格式。
+- 集成 `storybook-addon-a11y` 进行无障碍检测。
 
-- [ ] `*Props` interface exported from component file
-- [ ] `forwardRef` wrapping with correct generic types
-- [ ] `displayName` set (`Component.displayName = 'Component'`)
-- [ ] `className` prop accepted and merged
-- [ ] Responsive behavior verified at 375 / 768 / 1440 px
-- [ ] Keyboard navigation works; focus ring visible
-- [ ] ARIA attributes correct
-- [ ] Unit tests covering default render, variants, and a11y roles
-- [ ] Storybook story with all variants shown
-- [ ] Barrel export added to `src/components/<Name>/index.ts` and `src/index.ts`
-- [ ] Named export added to `package.json#exports`
-- [ ] Changeset created if the change is user-facing
+## 依赖管理
+
+- `react`、`react-dom`、`@mui/material`、`@emotion/react`、`@emotion/styled` 必须列为 `peerDependencies`，不得放入 `dependencies`
+- 本地开发所需的上述依赖同时列入 `devDependencies`
+- tsup 的 `external` 配置必须与 `peerDependencies` 保持一致，确保构建产物不打包这些依赖
+- 原因：列为 `dependencies` 会导致消费方出现两份 React/MUI 实例，引发 Hook 报错、MUI 主题断层、bundle 体积膨胀
+
+## 发版流程
+
+使用 **Changesets** 管理版本号和 changelog，不得手动修改 `package.json` 版本字段。
